@@ -19,21 +19,27 @@ def get_or_unknown(some):
 class IP_Info:
     def __init__(self, ip):
         self.ip = ip
-        self.org, self.country = self._who_is()
+        self.asn, self.org, self.country = self._who_is()
 
     def __str__(self):
-        return 'ip: {0}, org: {1}, country: {2}'.format(self.ip, self.org,
-                                                        self.country)
+        return 'ip: {0}, as number: {1}, org: {2}, country: {3}'.format(
+            self.ip, self.asn, self.org,
+            self.country)
 
     def _who_is(self):
         response = requests.request('get', IPINFO_URL + self.ip).json()
-        return get_or_unknown(response.get('org')), get_or_unknown(
-            response.get('country'))
+        org = get_or_unknown(response.get('org'))
+        country = get_or_unknown(response.get('country'))
+        splitted_org = org.split()
+        asn = splitted_org[0] if org != 'unknown' else 'unknown'
+        org = ' '.join(splitted_org[1:])
+        return asn, org, country
 
 
 def get_ips_from_tracert(address):
     try:
-        tracert_route = subprocess.check_output(['tracert', address]).decode('cp866')
+        tracert_route = subprocess.check_output(['tracert', address]).decode(
+            'cp866')
     except subprocess.CalledProcessError:
         sys.exit()
     hops_info = TRACERT_LINE_PATTERN.findall(tracert_route)
